@@ -1,0 +1,112 @@
+@startuml
+entity "roles" as roles {
+  *id : SERIAL <<PK>>
+  --
+  name : VARCHAR(50)
+}
+
+entity "users" as users {
+  *id : BIGSERIAL <<PK>>
+  --
+  username : VARCHAR(50)
+  email : VARCHAR(180)
+  password_hash : VARCHAR(255)
+  role_id : INT <<FK>>
+}
+
+entity "user_photo" as user_photo {
+  *id : BIGSERIAL <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  root : VARCHAR(255)
+  created_at : TIMESTAMP
+}
+
+entity "books" as books {
+  *id : BIGSERIAL <<PK>>
+  --
+  title : VARCHAR(255)
+  description : TEXT
+  published_year : INT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "book_photo" as book_photo {
+  *id : BIGSERIAL <<PK>>
+  --
+  book_id : BIGINT <<FK>>
+  root : VARCHAR(255)
+  created_at : TIMESTAMP
+}
+
+entity "authors" as authors {
+  *id : BIGSERIAL <<PK>>
+  --
+  first_name : VARCHAR(100)
+  last_name : VARCHAR(100)
+}
+
+entity "genres" as genres {
+  *id : SERIAL <<PK>>
+  --
+  name : VARCHAR(100)
+}
+
+entity "book_author" as book_author {
+  *book_id : BIGINT <<FK>>
+  *author_id : BIGINT <<FK>>
+}
+
+entity "book_genre" as book_genre {
+  *book_id : BIGINT <<FK>>
+  *genre_id : INT <<FK>>
+}
+
+entity "user_favorites" as user_favorites {
+  *user_id : BIGINT <<FK>>
+  *book_id : BIGINT <<FK>>
+  --
+  added_at : TIMESTAMP
+}
+
+entity "reviews" as reviews {
+  *id : BIGSERIAL <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  book_id : BIGINT <<FK>>
+  rating : INT
+  comment : TEXT
+  created_at : TIMESTAMP
+}
+
+' ==========================================
+' СВЯЗИ ТАБЛИЦ
+' ==========================================
+
+' Роли и Пользователи
+roles ||--o{ users
+
+' Фото пользователей
+users ||--o{ user_photo
+
+' Избранное
+users ||--o{ user_favorites
+books ||--o{ user_favorites
+
+' Отзывы
+users ||--o{ reviews
+books ||--o{ reviews
+
+' Фото книг
+books ||--o{ book_photo
+
+' Связь Книги - Авторы (Many-to-Many через промежуточную)
+books ||--|{ book_author
+authors ||--|{ book_author
+
+' Связь Книги - Жанры (Many-to-Many через промежуточную)
+books ||--|{ book_genre
+genres ||--|{ book_genre
+
+@enduml

@@ -1,0 +1,62 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Controllers (HTTP Layer)" {
+  class BookController {
+    + list(): JsonResponse
+    + getBookById(id: int): JsonResponse
+    + create(request: Request): JsonResponse
+    + delete(id: int): JsonResponse
+    + uploadPhoto(id: int, request: Request): JsonResponse
+    + deletePhoto(id: int, request: Request): JsonResponse
+    + exportCsv(): Response
+    + getAverageRating(id: int): JsonResponse
+  }
+
+  class FavoriteController {
+    + list(): JsonResponse
+    + addFavorite(bookId: int): JsonResponse
+    + removeFavorite(bookId: int): JsonResponse
+  }
+
+  class ReviewController {
+    + getReviews(id: int): JsonResponse
+    + addReview(id: int, request: Request): JsonResponse
+    + deleteReview(id: int, request: Request): JsonResponse
+  }
+}
+
+package "Repositories (Database Layer)" {
+  class BookRepository {
+    - connection: Connection
+    + findAll(): array
+    + findById(id: int): array
+    + create(title, description, year, genres, authors): int
+    + addPhoto(id: int, publicUrl: string): void
+    + deletePhoto(id: int, publicUrl: string): void
+  }
+
+  class FavoriteRepository {
+    - connection: Connection
+    + getUserFavorites(userId: int): array
+    + add(userId: int, bookId: int): bool
+    + remove(userId: int, bookId: int): bool
+  }
+
+  class ReviewRepository {
+    - connection: Connection
+    + getReviewsForBook(bookId: int): array
+    + addReview(bookId, userId, rating, comment): void
+    + getAverageRatingForBook(bookId: int): float
+    + deleteReview(reviewId: int, userId: int): bool
+  }
+}
+
+' Обозначение зависимостей (кто кого использует)
+BookController --> BookRepository : uses
+BookController --> ReviewRepository : uses (for rating)
+FavoriteController --> FavoriteRepository : uses
+ReviewController --> ReviewRepository : uses
+
+@enduml

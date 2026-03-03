@@ -1,0 +1,40 @@
+security:
+    password_hashers:
+        App\Security\User: 'auto'
+
+    providers:
+        # Оставляем ТОЛЬКО нашего провайдера
+        app_database_provider:
+            id: App\Security\DatabaseUserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        login:
+            pattern: ^/api/login
+            stateless: true
+            provider: app_database_provider
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        api:
+            pattern:   ^/api
+            stateless: true
+            provider: app_database_provider
+            jwt: ~
+
+    access_control:
+        # Пусто
+    - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] } # Разрешаем OPTIONS всем
+    - { path: ^/api/login, roles: PUBLIC_ACCESS }
+    - { path: ^/api/register, roles: PUBLIC_ACCESS }
+    - { path: ^/api/books, roles: PUBLIC_ACCESS, methods: [GET] }
+    - { path: ^/api/reviews, roles: PUBLIC_ACCESS, methods: [GET] }
+    - { path: ^/api/genres, roles: PUBLIC_ACCESS, methods: [GET] }
+    - { path: ^/api/authors, roles: PUBLIC_ACCESS, methods: [GET] }
