@@ -122,6 +122,12 @@ class BookRepository
         return $book;
     }
 
+    public function delete(int $id): void
+    {
+        $sql = 'DELETE FROM books WHERE id = :id';
+        $this->connection->executeStatement($sql, ['id' => $id]);
+    }
+
     // 3. Добавить книгу (только Админ)
     public function create(
         string $title, 
