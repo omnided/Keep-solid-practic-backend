@@ -1,0 +1,115 @@
+@startuml
+skinparam maxMessageSize 150
+actor "Admin (React App)" as Admin
+participant "BookController" as Controller
+participant "BookRepository" as Repository
+database "PostgreSQL" as DB
+
+' =========================================================
+== Сценарий 1: Создание новой книги (с транзакцией) ==
+' =========================================================
+autonumber 1
+
+Admin -> Controller: POST / (JSON: title, description, genres, authors)
+activate Controller
+
+Controller -> Controller: Валидация JSON
+
+alt Ошибка валидации
+    Controller --> Admin: 400 Bad Request
+else Данные корректны
+    Controller -> Repository: create(title, desc, year, genres, authors)
+    activate Repository
+
+    Repository -> DB: beginTransaction()
+    activate DB
+
+    Repository -> DB: INSERT INTO books RETURNING id
+    DB --> Repository: bookId
+
+    opt Если переданы жанры
+        loop Для каждого genreName
+            Repository -> DB: SELECT / INSERT genre
+            Repository -> DB: INSERT INTO book_genre
+        end
+    end
+
+    opt Если переданы авторы
+        loop Для каждого автора
+            Repository -> DB: SELECT / INSERT author
+            Repository -> DB: INSERT INTO book_author
+        end
+    end
+
+    alt Все запросы успешны
+        Repository -> DB: commit()
+        Repository --> Controller: bookId
+        Controller --> Admin: 201 Created {message, id: bookId}
+    else Ошибка (Exception)
+        Repository -> DB: rollBack()
+        Repository --> Controller: throw Exception
+        Controller --> Admin: 500 Internal Server Error
+    end
+    deactivate DB
+    deactivate Repository
+end
+deactivate Controller
+
+' =========================================================
+== Сценарий 2: Скачивание CSV файла ==
+' =========================================================
+autonumber 1
+
+Admin -> Controller: GET /export/csv
+activate Controller
+
+Controller -> Repository: findAll()
+activate Repository
+Repository -> DB: SELECT * FROM books\nLEFT JOIN ... (жанры, фото)
+activate DB
+DB --> Repository: Массив данных (книги)
+deactivate DB
+Repository --> Controller: array $books
+deactivate Repository
+
+Controller -> Controller: fopen('php://memory')\nЗапись заголовков и данных (fputcsv)
+Controller -> Controller: Конвертация кодировки (mb_convert_encoding)\nUTF-8 -> Windows-1251
+
+Controller --> Admin: 200 OK (Файл books_export.csv)
+deactivate Controller
+
+' =========================================================
+== Сценарий 3: Удаление книги ==
+' =========================================================
+autonumber 1
+
+Admin -> Controller: DELETE /{id}
+activate Controller
+
+Controller -> Repository: findById(id)
+activate Repository
+Repository -> DB: SELECT * FROM books WHERE id = ?
+activate DB
+DB --> Repository: Данные книги или null
+deactivate DB
+Repository --> Controller: array $book или null
+deactivate Repository
+
+alt Книга не найдена (null)
+    Controller --> Admin: 404 Not Found
+else Книга существует
+    Controller -> Repository: delete(id)
+    activate Repository
+    Repository -> DB: DELETE FROM books WHERE id = ?
+    activate DB
+    note right of DB: Благодаря ON DELETE CASCADE\nв PostgreSQL автоматически\nудалятся связи с авторами,\nжанрами, фото и отзывами!
+    DB --> Repository: Затронуто строк: 1
+    deactivate DB
+    Repository --> Controller: void
+    deactivate Repository
+    
+    Controller --> Admin: 200 OK {message: "Книга удалена"}
+end
+deactivate Controller
+
+@enduml

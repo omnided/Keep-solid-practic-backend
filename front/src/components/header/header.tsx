@@ -95,7 +95,7 @@ export const Header: React.FC = () => {
 
             {/* Аватарка */}
             <Link 
-              to="/profile" 
+              to="/" 
               className="w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-400 hover:border-transparent transition-all shadow-sm"
               title="Перейти в профиль"
             >

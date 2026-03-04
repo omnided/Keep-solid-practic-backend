@@ -18,7 +18,7 @@ class FavoriteRepository
             SELECT 
                 b.id, 
                 b.title, 
-                bp.root AS photo,
+                JSON_AGG(DISTINCT bp.root) AS photo,
                 b.published_year,
                 b.description,
                 -- Снова используем DISTINCT, чтобы избежать дублей
@@ -29,7 +29,7 @@ class FavoriteRepository
             LEFT JOIN genres g ON bg.genre_id = g.id
             LEFT JOIN book_photo bp ON b.id = bp.book_id
             WHERE uf.user_id = :user_id
-            GROUP BY b.id, b.title, b.published_year, b.description, bp.root 
+            GROUP BY b.id, b.title, b.published_year, b.description
             ORDER BY b.id DESC
         ';
 
@@ -40,11 +40,15 @@ class FavoriteRepository
 
         // Обрабатываем каждую книгу, чтобы превратить строку JSON обратно в массив PHP
         foreach ($favorites as &$book) {
+            $book['photo'] = $book['photo'] ? json_decode($book['photo'], true) : [];
             $book['genres'] = json_decode($book['genres'], true);
             
             // Если у книги нет жанров, PostgreSQL вернет [null], заменяем на пустой массив
             if ($book['genres'] === [null]) {
                 $book['genres'] = [];
+            }
+            if ($book['photo'] === [null]) {
+                $book['photo'] = [];
             }
         }
 
