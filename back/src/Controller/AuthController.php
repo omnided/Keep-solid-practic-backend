@@ -82,7 +82,7 @@ class AuthController extends AbstractController
 
             // 6. МАГИЯ БАЗЫ: здесь мы вызываем твой UserPhotoRepository 
             // и передаем туда ID юзера и наш новенький текстовый URL
-            $this->userPhotoRepository->addPhoto($id, $publicUrl);
+            $this->userRepository->addPhoto($id, $publicUrl);
 
             return $this->json([
                 'message' => 'Аватарка успешно загружена!',
