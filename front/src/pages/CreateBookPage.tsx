@@ -5,24 +5,19 @@ import { useCreateBook, useUploadBookPhoto } from '../features/books/api';
 export const CreateBookPage: React.FC = () => {
   const navigate = useNavigate();
   
-  // Мутации
   const createMutation = useCreateBook();
   const uploadPhotoMutation = useUploadBookPhoto();
 
-  // Локальный стейт формы
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [publishedYear, setPublishedYear] = useState<string>('');
   
-  // Жанры теперь просто строка (пользователь вводит через запятую)
   const [genresInput, setGenresInput] = useState('');
   
-  // Авторы теперь массив объектов, по умолчанию одно пустое поле
   const [authors, setAuthors] = useState([{ first_name: '', last_name: '' }]);
   
   const [photo, setPhoto] = useState<File | null>(null);
 
-  // --- Управление полями авторов ---
   const handleAddAuthor = () => {
     setAuthors([...authors, { first_name: '', last_name: '' }]);
   };
@@ -37,17 +32,14 @@ export const CreateBookPage: React.FC = () => {
     ));
   };
 
-  // --- Главный обработчик сохранения ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Превращаем строку "Фантастика, Драма " в чистый массив ["Фантастика", "Драма"]
     const genreNames = genresInput
       .split(',')
       .map(g => g.trim())
-      .filter(g => g.length > 0); // Убираем пустые строки, если человек поставил лишнюю запятую
+      .filter(g => g.length > 0);
 
-    // Отфильтровываем совсем пустые поля авторов, чтобы не слать мусор на бэкенд
     const validAuthors = authors.filter(a => a.first_name.trim() || a.last_name.trim());
 
     // ШАГ 1: Создаем книгу
@@ -55,14 +47,12 @@ export const CreateBookPage: React.FC = () => {
       title,
       description,
       published_year: Number(publishedYear),
-      genreNames,       // Отправляем новый формат жанров
-      authors: validAuthors // Отправляем новый формат авторов
+      genreNames, 
+      authors: validAuthors 
     }, {
-      onSuccess: (responseData: any) => { // Принимаем ответ от сервера
-        // Достаем ID, независимо от того, вернул ли бэкенд просто число или объект {id: 5, message: '...'}
+      onSuccess: (responseData: any) => { 
         const createdBookId = typeof responseData === 'number' ? responseData : responseData.id;
 
-        // ШАГ 2: Если есть фото, загружаем его для нового ID
         if (photo && createdBookId) {
           const formData = new FormData();
           formData.append('photo', photo);
@@ -74,7 +64,6 @@ export const CreateBookPage: React.FC = () => {
             }
           );
         } else {
-          // Если фото нет, просто переходим на страницу книги
           navigate({ to: `/books/${createdBookId}` });
         }
       },

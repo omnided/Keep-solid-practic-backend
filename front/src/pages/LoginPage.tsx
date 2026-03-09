@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useLogin } from '../features/register/api'; // Подставь правильный путь к своему хуку
+import { useLogin } from '../features/register/api';
 
 export const LoginPage: React.FC = () => {
-  // Меняем username на email
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
@@ -12,8 +11,6 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
-      // Отправляем данные на бэкенд. 
-      // Привязываем email к ключу username, так как стандартный JWT Symfony ждет именно его
       login({ email, password });
     }
   };
@@ -38,7 +35,7 @@ export const LoginPage: React.FC = () => {
             </label>
             <input
               id="email"
-              type="email" // Меняем тип на email для валидации браузером
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

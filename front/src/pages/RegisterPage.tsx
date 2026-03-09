@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useRegister } from '../features/register/api'; // Подставь правильный путь
+import { useRegister } from '../features/register/api';
 
 export const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  // Достаем функцию мутации из хука
   const { mutate: register, isPending, isError } = useRegister();
 
   const handleSubmit = (e: React.FormEvent) => {

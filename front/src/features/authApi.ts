@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 
 // Тип данных для входа (обычно только username и password)
 // Required<User> подойдет, если User содержит эти поля
-const loginUser = async (data: Required<Pick<User, 'email' | 'role'>>): Promise<string> => {
+const loginUser = async (data: Required<Pick<User, 'email' >>): Promise<string> => {
     const response = await apiClient.post('/auth/login', data);
     
     // response.data.data - это JWT строка

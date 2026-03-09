@@ -14,7 +14,6 @@ export const BookCard: React.FC<{
 }> = ({ book, isAdmin, onDelete }) => {
   const navigate = useNavigate();
   
-  // Хук рейтинга теперь легально работает внутри отдельного компонента
   const { data: rating, isLoading: isRatingLoading } = useBookAverageRating(book.id);
 
   return (
@@ -25,10 +24,8 @@ export const BookCard: React.FC<{
       {/* Обложка книги */}
       <div className="relative aspect-[2/3] w-full rounded-md shadow-[4px_4px_10px_rgba(0,0,0,0.15)] overflow-hidden bg-amber-100 transition-transform duration-300 group-hover:-translate-y-2 group-hover:shadow-[4px_12px_20px_rgba(0,0,0,0.2)]">
         
-        {/* ИСПРАВЛЕННАЯ ПРОВЕРКА: проверяем, что это массив и в нем есть элементы */}
         {book.photo && book.photo.length > 0 ? (
           <img 
-            // Добавил небольшую защиту: если бэкенд вдруг отдаст строку, берем её, иначе первый элемент массива
             src={`http://localhost:8080${Array.isArray(book.photo) ? book.photo[0] : book.photo}`} 
             alt={book.title} 
             className="w-full h-full object-cover"
@@ -101,15 +98,11 @@ export const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   
-  // Вызываем хуки получения книг и удаления
   const { data: books, isLoading, isError } = useBooks();
   const deleteMutation = useDeleteBook();
   const exportCsvMutation = useExportBooksCsv();
-  // Логика isAdmin: берем из localStorage, токена или контекста твоего приложения
-  // Временно ставлю парсинг из стораджа, подстрой под свою систему авторизации
   const isAdmin = user?.roles?.includes('ROLE_ADMIN') ?? false;
 
-  // Единая функция удаления, которую мы передадим в карточки
   const handleDeleteClick = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     if (window.confirm('Вы уверены, что хотите сжечь этот фолиант? Данные не восстановить.')) {
@@ -158,7 +151,6 @@ export const LibraryPage: React.FC = () => {
               )}
             </button>
 
-            {/* Заодно поправил тут навигацию для строгого роутинга: { to: '/books/create' } */}
             <button 
               onClick={() => navigate({ to: '/books/create' })}
               className="bg-amber-700 hover:bg-amber-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200"
