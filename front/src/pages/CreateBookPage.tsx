@@ -42,7 +42,6 @@ export const CreateBookPage: React.FC = () => {
 
     const validAuthors = authors.filter(a => a.first_name.trim() || a.last_name.trim());
 
-    // ШАГ 1: Создаем книгу
     createMutation.mutate({
       title,
       description,

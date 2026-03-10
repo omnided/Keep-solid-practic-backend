@@ -10,7 +10,6 @@ import {
 } from '../features/books/api'; 
 import { useAddFavoriteBook } from '../features/favorites/api';
 import { useReviewsForBook, useCreateReview } from '../features/reviews/api';
-import { number } from 'zod';
 
 export const BookPage: React.FC = () => {
   const { id } = useParams({ strict: false }); 
@@ -18,18 +17,14 @@ export const BookPage: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.roles?.includes('ROLE_ADMIN');
 
-  // Локальные стейты для отзывов и галереи
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(5); 
   const [hoverRating, setHoverRating] = useState(0); 
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
-  // Стейты для избранного
-  // Если бэкенд научится отдавать is_favorited, можно будет инициализировать оттуда
   const [isFavorited, setIsFavorited] = useState(false); 
   const [isAnimating, setIsAnimating] = useState(false); 
 
-  // Запросы к API
   const { data: book, isLoading: isBookLoading } = useBook(Number(id));
   const { data: reviews, isLoading: isReviewsLoading } = useReviewsForBook(Number(id));
   const { data: averageRating, isLoading: isRatingLoading } = useBookAverageRating(Number(id));
@@ -40,18 +35,14 @@ export const BookPage: React.FC = () => {
   const deletePhotoMutation = useDeleteBookPhoto();
   const addFavoriteMutation = useAddFavoriteBook();
 
-  // Отсекаем загрузку и ошибки
   if (isBookLoading) return <div className="text-center p-20 text-xl text-amber-900 font-serif">Листаем страницы... Загрузка</div>;
   if (!book) return <div className="text-center p-20 text-red-600 font-serif">Книга не найдена или сожжена инквизицией.</div>;
   
-  // Формируем массив фотографий
   const photos: string[] = book.photo || [];
 
-  // Обработчики галереи
   const nextPhoto = () => setCurrentPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
   const prevPhoto = () => setCurrentPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
 
-  // Обработчики админа
   const handleDelete = () => {
     if (window.confirm('Точно сжечь фолиант?')) {
       deleteMutation.mutate(book.id, {
@@ -86,17 +77,15 @@ export const BookPage: React.FC = () => {
     }
   };
 
-  // Обработчик избранного
   const handleFavoriteClick = () => {
     if (!user || isFavorited) return; 
 
-    // Теперь мы передаем просто ЧИСЛО (book.id), как и ждет наш обновленный хук!
     addFavoriteMutation.mutate(book.id, {
       onSuccess: () => {
         setIsAnimating(true);
         setTimeout(() => {
           setIsAnimating(false);
-          setIsFavorited(true); // Убираем кнопку из DOM после анимации
+          setIsFavorited(true);
         }, 400);
       },
       onError: () => {
@@ -105,7 +94,6 @@ export const BookPage: React.FC = () => {
     });
   };
 
-  // Обработчик отзыва
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewText.trim() || !user || rating === 0) return; 

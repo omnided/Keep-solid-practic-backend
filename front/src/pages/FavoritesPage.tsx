@@ -10,7 +10,6 @@ export const FavoritesPage: React.FC = () => {
   
   const { data: favoriteBooks, isLoading, isError } = useFavoriteBooks();
   
-  // Инициализируем мутацию удаления
   const deleteFavoriteMutation = useDeleteFavoriteBook();
 
   if (!user) {
@@ -36,9 +35,7 @@ export const FavoritesPage: React.FC = () => {
     return <div className="text-center p-20 text-red-600 font-serif">Не удалось открыть личный архив. Попробуйте позже.</div>;
   }
 
-  // ОБРАБОТЧИК УДАЛЕНИЯ ИЗ ИЗБРАННОГО
   const handleRemoveFavorite = (e: React.MouseEvent, favoriteId: number) => {
-    // Останавливаем всплытие события, чтобы не сработал клик по карточке (переход на страницу книги)
     e.stopPropagation(); 
     
     if (window.confirm('Убрать книгу из избранного?')) {
@@ -89,7 +86,6 @@ export const FavoritesPage: React.FC = () => {
             const targetBook = favoriteItem.book || favoriteItem; 
             
             return (
-              // Оборачиваем карточку в relative div, чтобы повесить крестик
               <div key={favoriteItem.id} className="relative group">
                 
                 <BookCard 
@@ -99,7 +95,6 @@ export const FavoritesPage: React.FC = () => {
                 />
 
                 {/* КНОПКА УДАЛЕНИЯ ИЗ ИЗБРАННОГО */}
-                {/* Она появляется только при наведении на карточку (group-hover:opacity-100) */}
                 <button
                   onClick={(e) => handleRemoveFavorite(e, favoriteItem.id)}
                   className="absolute top-2 left-2 bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"

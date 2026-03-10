@@ -24,15 +24,12 @@ class FavoriteController extends AbstractController
         return $this->json($favorites);
     }
 
-    // ТЗ: "добавление книги в избранное - требует логин"
     #[Route('/{bookId}', methods: ['POST'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')] // Защищаем роут. ROLE_USER есть у всех залогиненных.
+    #[IsGranted('IS_AUTHENTICATED_FULLY')] 
     public function addFavorite(int $bookId): JsonResponse
     {
-        // Магия! Достаем текущего авторизованного пользователя
         $user = $this->getUser();
 
-        // Пробуем добавить книгу
         $success = $this->favoriteRepository->add($user->getId(), $bookId);
 
         if (!$success) {
@@ -42,15 +39,11 @@ class FavoriteController extends AbstractController
         return $this->json(['message' => 'Книга добавлена в избранное'], 201);
     }
 
-    // ТЗ: "удаление книги из избранного - требует логин + только свой список"
     #[Route('/{bookId}', methods: ['DELETE'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function removeFavorite(int $bookId): JsonResponse
     {
         $user = $this->getUser();
-
-        // Мы передаем ID текущего юзера в запрос DELETE. 
-        // Таким образом, юзер физически не сможет удалить чужую запись!
         $success = $this->favoriteRepository->remove($user->getId(), $bookId);
 
         if (!$success) {

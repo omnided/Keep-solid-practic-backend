@@ -10,7 +10,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-// Этот атрибут регистрирует команду и задает её имя в консоли
 #[AsCommand(
     name: 'app:change-role',
     description: 'Изменяет роль пользователя по его email',
@@ -18,14 +17,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ChangeUserRoleCommand extends Command
 {
     public function __construct(
-        private Connection $connection // Подключаем наш любимый DBAL
+        private Connection $connection
     ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        // Задаем аргументы, которые команда будет ждать от пользователя
         $this
             ->addArgument('email', InputArgument::REQUIRED, 'Email пользователя')
             ->addArgument('role', InputArgument::REQUIRED, 'Новая роль (например: admin, client)');
@@ -33,13 +31,11 @@ class ChangeUserRoleCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        // Удобная обертка для красивого вывода в консоль
         $io = new SymfonyStyle($input, $output);
 
         $email = $input->getArgument('email');
-        $roleName = strtolower($input->getArgument('role')); // Приводим к нижнему регистру для надежности
+        $roleName = strtolower($input->getArgument('role'));
 
-        // 1. Ищем ID новой роли в таблице roles
         $roleId = $this->connection->fetchOne(
             'SELECT id FROM roles WHERE name = :name',
             ['name' => $roleName]
@@ -47,10 +43,9 @@ class ChangeUserRoleCommand extends Command
 
         if (!$roleId) {
             $io->error(sprintf('Роль "%s" не найдена в базе данных.', $roleName));
-            return Command::FAILURE; // Возвращаем код ошибки
+            return Command::FAILURE;
         }
 
-        // 2. Проверяем, существует ли пользователь с таким email
         $userId = $this->connection->fetchOne(
             'SELECT id FROM users WHERE email = :email',
             ['email' => $email]
@@ -61,7 +56,6 @@ class ChangeUserRoleCommand extends Command
             return Command::FAILURE;
         }
 
-        // 3. Обновляем role_id у пользователя
         $this->connection->executeStatement(
             'UPDATE users SET role_id = :role_id WHERE id = :id',
             [
@@ -69,10 +63,8 @@ class ChangeUserRoleCommand extends Command
                 'id' => $userId
             ]
         );
-
-        // Выводим красивое зеленое сообщение об успехе
         $io->success(sprintf('Роль пользователя %s успешно изменена на %s!', $email, $roleName));
 
-        return Command::SUCCESS; // Возвращаем код успешного завершения
+        return Command::SUCCESS;
     }
 }

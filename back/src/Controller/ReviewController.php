@@ -21,22 +21,18 @@ class ReviewController extends AbstractController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function addReview(int $id, Request $request): JsonResponse
     {
-        // 1. Достаем ID текущего пользователя из токена
         $user = $this->getUser();
         $userId = $user->getId();
 
-        // 2. Читаем JSON, который прислал клиент
         $data = json_decode($request->getContent(), true);
 
-        // Проверяем, что клиент прислал хотя бы оценку
         if (!isset($data['rating'])) {
             return $this->json(['message' => 'Необходимо указать оценку (rating)'], Response::HTTP_BAD_REQUEST);
         }
         
         $rating = (int) $data['rating'];
-        $comment = $data['comment'] ?? null; // Комментарий может быть пустым
+        $comment = $data['comment'] ?? null;
 
-        // 3. Отправляем в базу
         $this->reviewRepository->addReview($id, $userId, $rating, $comment);
 
         return $this->json(['message' => 'Отзыв успешно добавлен!'], Response::HTTP_CREATED);

@@ -7,7 +7,7 @@ use Doctrine\DBAL\Connection;
 class BookRepository
 {
     public function __construct(
-        private Connection $connection // Подключаем DBAL
+        private Connection $connection 
     ) {}
 
     // 1. Получить все книги (для всех)
@@ -31,19 +31,14 @@ class BookRepository
         ORDER BY b.id DESC
     ';
 
-    // Выполняем запрос
     $items = $this->connection->fetchAllAssociative($sql);
 
-    // Небольшая обработка результата для красивого JSON
     $items = $this->connection->fetchAllAssociative($sql);
 
-    // Безопасная обработка результата
     foreach ($items as &$item) {
-        // Если пришел null из БД, сразу ставим пустой массив [], иначе декодируем
         $photo = $item['photo'] ? json_decode($item['photo'], true) : [];
         $genres = $item['genres'] ? json_decode($item['genres'], true) : [];
         
-        // Очищаем от [null]
         $item['photo'] = ($photo === [null]) ? [] : $photo;
         $item['genres'] = ($genres === [null]) ? [] : $genres;
     }
@@ -101,20 +96,16 @@ class BookRepository
             GROUP BY b.id, b.title, b.published_year, b.description
         ';
         
-        // Получаем одну строку из БД
         $book = $this->connection->fetchAssociative($sql, ['id' => $id]);
         
-        // Если книга не найдена, сразу возвращаем null
         if (!$book) {
             return null;
         }
 
-        // Превращаем JSON-строки от PostgreSQL в настоящие массивы PHP
         $book['photo'] = json_decode($book['photo'], true);
         $book['genres'] = json_decode($book['genres'], true);
         $book['authors'] = json_decode($book['authors'], true);
 
-        // Очищаем от [null], если у книги еще нет жанров или авторов
         if ($book['photo'] === [null]) $book['photo'] = [];
         if ($book['genres'] === [null]) $book['genres'] = [];
         if ($book['authors'] === [null]) $book['authors'] = [];
@@ -133,14 +124,12 @@ class BookRepository
         string $title, 
         ?string $description, 
         ?int $year, 
-        array $genreNames = [], // Принимаем массив строк: ['Фантастика', 'Драма']
-        array $authors = []     // Принимаем массив массивов: [['first_name' => '...', 'last_name' => '...']]
+        array $genreNames = [],
+        array $authors = [] 
     ): int {
-        // 1. Открываем транзакцию
         $this->connection->beginTransaction();
 
         try {
-            // Шаг 1: Создаем саму книгу и получаем её ID
             $sqlBook = '
                 INSERT INTO books (title, description, published_year) 
                 VALUES (:title, :description, :year) 
@@ -153,7 +142,6 @@ class BookRepository
                 'year' => $year
             ]);
 
-            // Шаг 2: Привязываем (или создаем) ЖАНРЫ
             if (!empty($genreNames)) {
                 $sqlFindGenre = 'SELECT id FROM genres WHERE name = :name';
                 $sqlInsertGenre = 'INSERT INTO genres (name) VALUES (:name) RETURNING id';
@@ -161,17 +149,14 @@ class BookRepository
 
                 foreach ($genreNames as $genreName) {
                     $name = trim($genreName);
-                    if (empty($name)) continue; // Защита от пустых строк
+                    if (empty($name)) continue; 
 
-                    // Ищем жанр в БД
                     $genreId = $this->connection->fetchOne($sqlFindGenre, ['name' => $name]);
 
-                    // Если не нашли — создаем новый
                     if (!$genreId) {
                         $genreId = $this->connection->fetchOne($sqlInsertGenre, ['name' => $name]);
                     }
 
-                    // Привязываем к книге
                     $this->connection->executeStatement($sqlLinkGenre, [
                         'book_id' => $bookId,
                         'genre_id' => $genreId
@@ -179,7 +164,6 @@ class BookRepository
                 }
             }
 
-            // Шаг 3: Привязываем (или создаем) АВТОРОВ
             if (!empty($authors)) {
                 $sqlFindAuthor = 'SELECT id FROM authors WHERE first_name = :first_name AND last_name = :last_name';
                 $sqlInsertAuthor = 'INSERT INTO authors (first_name, last_name) VALUES (:first_name, :last_name) RETURNING id';
@@ -189,15 +173,13 @@ class BookRepository
                     $firstName = trim($authorData['first_name'] ?? '');
                     $lastName = trim($authorData['last_name'] ?? '');
                     
-                    if (empty($firstName) && empty($lastName)) continue; // Пропускаем пустых
+                    if (empty($firstName) && empty($lastName)) continue; 
 
-                    // Ищем автора в БД
                     $authorId = $this->connection->fetchOne($sqlFindAuthor, [
                         'first_name' => $firstName,
                         'last_name' => $lastName
                     ]);
 
-                    // Если не нашли — создаем нового
                     if (!$authorId) {
                         $authorId = $this->connection->fetchOne($sqlInsertAuthor, [
                             'first_name' => $firstName,
@@ -205,7 +187,6 @@ class BookRepository
                         ]);
                     }
 
-                    // Привязываем к книге
                     $this->connection->executeStatement($sqlLinkAuthor, [
                         'book_id' => $bookId,
                         'author_id' => $authorId
@@ -213,13 +194,11 @@ class BookRepository
                 }
             }
 
-            // 2. Всё прошло успешно! Сохраняем.
             $this->connection->commit();
 
             return $bookId;
 
         } catch (\Exception $e) {
-            // 3. Откат в случае любой ошибки
             $this->connection->rollBack();
             throw $e; 
         }
